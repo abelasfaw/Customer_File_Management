@@ -1,0 +1,41 @@
+{
+  "name": "customer-file-mangement",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ant-design/charts": "^1.4.2",
+    "@ant-design/icons": "^4.6.2",
+    "@emotion/react": "^11.10.5",
+    "@emotion/styled": "^11.10.5",
+    "@mui/icons-material": "^5.11.0",
+    "@mui/material": "^5.11.6",
+    "@next/font": "^13.3.0",
+    "antd": "^5.1.6",
+    "axios": "^0.21.1",
+    "babel-plugin-import": "1.12.2",
+    "form-data": "^4.0.0",
+    "moment": "^2.29.4",
+    "next": "^13.3.0",
+    "next-redux-wrapper": "^6.0.2",
+    "node-fetch": "^2.6.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-google-material-icons": "^1.0.4",
+    "react-pdf": "^6.2.2",
+    "react-redux": "^7.2.3",
+    "redux": "^4.0.5",
+    "redux-devtools-extension": "^2.13.9",
+    "redux-logger": "^3.0.6",
+    "redux-thunk": "^2.3.0"
+  },
+  "devDependencies": {
+    "eslint": "8.32.0",
+    "eslint-config-next": "13.1.5"
+  }
+}
