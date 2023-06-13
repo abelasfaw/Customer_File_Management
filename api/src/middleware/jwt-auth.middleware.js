@@ -35,3 +35,27 @@ exports.isUserActive = ()=>{
             }   
     ]
 }
+exports.isAdmin = async(req,res,next)=>{
+    if (req.user.type === 'ADMIN'){
+        return next()
+    }
+    throw new UnauthorizedError("Unauthorized access")
+}
+exports.isFileRoom = async(req,res,next)=>{
+    if (req.user.type === 'FILE-ROOM'){
+        return next()
+    }
+    throw new UnauthorizedError("Unauthorized access")
+}    
+exports.isAdminOrFileRoom = async(req,res,next)=>{
+    if (req.user.type === 'ADMIN' || req.user.type === 'FILE-ROOM'){
+        return next()
+    }
+    throw new UnauthorizedError("Unauthorized access")
+}
+exports.isOfficeAccount = async(req, res, next)=> {
+if (officeAccounts.includes(req.user.type)){
+    return next()
+}
+throw new UnauthorizedError("Unauthorized access")
+}
