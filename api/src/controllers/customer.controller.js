@@ -210,3 +210,64 @@ exports.fetchCustomerFile = async (req, res, next) => {
         */
     }
 }
+exports.searchCustomer = async (req, res, next) => {
+    let schema = yup.object().shape({
+        registrationNumber: yup.string().required(),      
+    })
+    await schema.validate(req.query, {abortEarly:false})
+    let customer = await Customer.findOne({
+        registrationNumber: req.query.registrationNumber
+    })
+    if (!customer) {
+        throw new NotFoundError("Customer with specified registration number not found")
+    }
+    let customerDetails = await Customer.aggregate(
+        [
+          {
+            '$match': {
+              '_id': new mongoose.Types.ObjectId(customer._id)
+            }
+          }, {
+            '$lookup': {
+              'from': 'files', 
+              'localField': '_id', 
+              'foreignField': 'customer', 
+              'as': 'files'
+            }
+          }
+        ]
+      )
+    //if customer doesnt have files set files to empty array
+    if (!customerDetails.files) {
+	console.log("inside")
+	customerDetails = JSON.parse(JSON.stringify(customerDetails))
+    	customerDetails['files'] = []
+    }
+    return res.json({
+        success:true,
+        data: customerDetails
+    })
+}
+exports.fetchAllCustomers = async(req, res) => {
+    const paginationSchema = yup.object().shape({
+        page: yup.number().positive(),
+        limit: yup.number().positive()
+    })
+    await paginationSchema.validate(req.query, {abortEarly:false})
+    const numberOfCustomers = await Customer.countDocuments();
+    let customerFetchQuery = Customer.find({});
+    if (req.query.page && req.query.limit){
+        const skip = (req.query.page - 1) * req.query.limit
+        if (numberOfCustomers > 0 && skip >= numberOfCustomers){
+            throw new NotFoundError("Page not found")
+        }
+        customerFetchQuery = customerFetchQuery.skip(skip).limit(req.query.limit);
+    }
+    const customers = await customerFetchQuery;
+    return res.json({
+        success: true,
+        totalCustomers: numberOfCustomers,
+        results: customers.length,
+        data: customers
+    })
+}
