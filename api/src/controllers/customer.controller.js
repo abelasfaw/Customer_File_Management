@@ -104,3 +104,109 @@ exports.fetchSingleCustomer = async (req, res, next) => {
         data: customerDetails
     })
 }
+exports.uploadCustomerFile = async (req, res, next) => {
+    let newFile = await File.create({
+        type: req.params.file_type,
+        customer: req.customer._id,
+        name:req.files.file[0].filename,
+        size: req.files.file[0].size,
+        uploadedBy:req.user._id  
+    })
+    return res.json({
+        success: true,
+        data: newFile
+    })
+}
+exports.fetchCustomerFileForFileRoomAndAdmin = async (req, res, next) => {
+    const parameterSchema = yup.object().shape({
+        customer_id: yup.string().required(),
+        filename: yup.string().required(),
+        file_type: yup.mixed().oneOf(fileTypes).required(),
+    })
+    await parameterSchema.validate(req.params);
+    // await bodySchema.validate(req.body, {abortEarly:false});
+    if (!(idChecker.isValidObjectId(req.params.customer_id))){
+        throw new ValidationError('Invalid customer id')
+    }
+    let customer = await Customer.findOne({
+        _id: req.params.customer_id
+    })
+    if (!customer) {
+        throw new NotFoundError("Customer with specified id not found")
+    }
+    let filePath = process.cwd() + `\\files\\customer-${customer._id}\\${req.params.file_type}\\${req.params.filename}`
+    if (fs2.existsSync(filePath)){
+        //stream file content
+        res.writeHead(200, {'content-type':'application/pdf'})
+        fs2.createReadStream(filePath).pipe(res);
+        
+        /*
+        read file content and send as a whole
+        var data =fs2.readFileSync(filePath);
+        res.contentType("application/pdf");
+        res.status(200);
+        res.send(data);
+        */
+    }
+}
+exports.fetchCustomerFile = async (req, res, next) => {
+    console.log("Path: ", process.cwd())
+    const parameterSchema = yup.object().shape({
+        customer_id: yup.string().required(),
+        filename: yup.string().required(),
+        file_type: yup.mixed().oneOf(fileTypes).required(),
+        token: yup.string().required()
+    })
+    const bodySchema = yup.object().shape({
+        file_type: yup.mixed().oneOf(fileTypes).required(),
+        token: yup.string().required()
+    })
+    await parameterSchema.validate(req.params);
+    //await bodySchema.validate(req.body, {abortEarly:false});
+    if (!(idChecker.isValidObjectId(req.params.customer_id))){
+        throw new ValidationError('Invalid customer id')
+    }
+    let customer = await Customer.findOne({
+        _id: req.params.customer_id
+    })
+    if (!customer) {
+        throw new NotFoundError("Customer with specified id not found")
+    }
+    
+    let fileAccess = await FileAccess.findOne({
+        token: req.params.token
+    })
+    if (!fileAccess){
+        throw new NotFoundError("File-Access not found")
+    }
+    console.log("File Access: ", fileAccess)
+    const privateKey = await fs.readFile('private_key.pem', 'utf8');
+    try {
+        var tokenData = jwt.verify(req.params.token, privateKey);
+    }
+    catch (err) {
+        if (err instanceof jwt.TokenExpiredError){
+            throw new UnauthorizedError('File Access expired');
+        }
+        throw new ValidationError("Invalid FileAccess token")
+    }
+    console.log(req.user._id, tokenData.grantedTo)
+    console.log(customer._id, tokenData.customer)
+    if (req.user._id != tokenData.grantedTo || customer._id != tokenData.customer){
+        throw new UnauthorizedError("Unauthorized access")
+    }
+    let filePath = process.cwd() + `\\files\\customer-${customer._id}\\${req.params.file_type}\\${req.params.filename}`
+    if (fs2.existsSync(filePath)){
+        //stream file content
+        res.writeHead(200, {'content-type':'application/pdf'})
+        fs2.createReadStream(filePath).pipe(res);
+        
+        /*
+        read file content and send as a whole
+        var data =fs2.readFileSync(filePath);
+        res.contentType("application/pdf");
+        res.status(200);
+        res.send(data);
+        */
+    }
+}
